@@ -1,0 +1,46 @@
+name: Publish Docker Image
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Docker login for GitHub Container Registry
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract the release version without the 'v' prefix
+      - name: Extract release version
+        id: extract_version
+        run: |
+          RAW_VERSION=${GITHUB_REF##*/}
+          VERSION=${RAW_VERSION#v}
+          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
+
+      # Update Cargo.toml version
+      - name: Update Cargo.toml version
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ env.RELEASE_VERSION }}\"/" Cargo.toml
+
+      # Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ env.RELEASE_VERSION }} .
+
+      # Push the Docker image to GitHub Container Registry
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ env.RELEASE_VERSION }}

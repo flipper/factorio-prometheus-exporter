@@ -1,0 +1,21 @@
+[package]
+name = "factorio-prometheus-exporter"
+version = "1.0.0"
+authors = ["Flipper"]
+edition = "2024"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+codegen-units = 1
+
+[dependencies]
+prometheus_exporter = { version = "0.8.5", default-features = false, features = ["logging"] }
+tokio = { version = "1.44", features = ["time", "rt-multi-thread", "macros", "signal"], default-features = false }
+rcon-client = { version = "0.1" }
+argh = "0.1.13"
+lazy_static = "1.5.0"
+
+#[patch.crates-io]
+#rcon-client = { path = "./rcon-rs" }
